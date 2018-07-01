@@ -1,24 +1,44 @@
 version: '3'
 services:
-    # web-build:
-    #     build: app
-    #     image: demo-app:latest
-    # web1:
-    #     image: demo-app:latest
-    #     ports:
-    #         - "5000:5000"
-    # web2:
-    #     image: demo-app:latest
-    #     ports:
-    #         - "5001:5000"
-    # web3:
-    #     image: demo-app:latest
-    #     ports:
-    #         - "5002:5000"
+    web-build:
+        build: app
+        image: demo-app:latest
+    web1:
+        image: demo-app:latest
+        ports:
+            - "5000:5000"
+        networks:
+            vpc:
+                ipv4_address: 10.5.0.2
+    web2:
+        image: demo-app:latest
+        ports:
+            - "5001:5000"
+        networks:
+            vpc:
+                ipv4_address: 10.5.0.3
+    web3:
+        image: demo-app:latest
+        ports:
+            - "5002:5000"
+        networks:
+            vpc:
+                ipv4_address: 10.5.0.4
     nginx-build:
         build: nginx
-        image: demo-nginx:latest
+        image: demo-loadbalancer:latest
     nginx-loadbalancer:
-        image: demo-nginx:latest
+        image: demo-loadbalancer:latest
         ports:
-            - "81:80"
+            - "81:81"
+        networks:
+            vpc:
+                ipv4_address: 10.5.0.5
+
+networks:
+    vpc:
+        driver: bridge
+        ipam:
+            config:
+                -   subnet: 10.5.0.0/29
+                    #gateway: 10.5.0.1

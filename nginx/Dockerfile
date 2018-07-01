@@ -1,8 +1,6 @@
-from centos:latest
-
-run yum -y install epel-release
-run yum -y install nginx
+from nginx:latest
 
 copy nginx.conf /etc/nginx/nginx.conf
+#copy main.html /etc/nginx/html/index.html
 
-expose 80
+expose 81
