@@ -3,10 +3,23 @@ services:
     web-build:
         build: app
         image: demo-app:latest
+        environment:
+            - REDIS_IP=10.5.0.6
+            - REDIS_PORT=6379
+    redis:
+        build: redis
+        ports:
+            - "6379:6379"
+        networks:
+            vpc:
+                ipv4_address: 10.5.0.6
     web1:
         image: demo-app:latest
         ports:
             - "5000:5000"
+        environment:
+            - REDIS_IP=10.5.0.6
+            - REDIS_PORT=6379
         networks:
             vpc:
                 ipv4_address: 10.5.0.2
@@ -14,6 +27,9 @@ services:
         image: demo-app:latest
         ports:
             - "5001:5000"
+        environment:
+            - REDIS_IP=10.5.0.6
+            - REDIS_PORT=6379
         networks:
             vpc:
                 ipv4_address: 10.5.0.3
@@ -21,14 +37,14 @@ services:
         image: demo-app:latest
         ports:
             - "5002:5000"
+        environment:
+            - REDIS_IP=10.5.0.6
+            - REDIS_PORT=6379
         networks:
             vpc:
                 ipv4_address: 10.5.0.4
-    nginx-build:
-        build: nginx
-        image: demo-loadbalancer:latest
     nginx-loadbalancer:
-        image: demo-loadbalancer:latest
+        build: nginx
         ports:
             - "81:81"
         networks:
