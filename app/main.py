@@ -7,6 +7,9 @@ import json
 import random
 import redis
 import os
+import datetime
+
+DATE_FORMAT = "%Y-%m-%d %H:%M:%S.%f"
 
 app = Flask(__name__)
 r = redis.StrictRedis(host=os.environ['REDIS_IP'], port=int(os.environ['REDIS_PORT']), db=0)
@@ -20,15 +23,30 @@ def authenticate():
 
 @app.route("/")
 def main():
-	r.set("foo", "bar")
-	print(r.get("foo"))
 	hostname = socket.gethostbyname(socket.gethostname())
-	if not "sessionId" in request.cookies:
+	sessionValid = False
+	setCookie = False
+	reauthorize = False
+	if "sessionId" in request.cookies:
+		try:
+			sessId = request.cookies.get("sessionId")
+			username = r.get(sessId)
+			expiry = datetime.datetime.strptime(r.get(sessId + "-expire"), DATE_FORMAT).date()
+			sessionValid = datetime.datetime.now() < expiry
+			reauthorize = not sessionValid
+		except:
+			pass
+	if not sessionValid:
+		if reauthorize or not request.authorization or not request.authorization.username:
+			return authenticate()
 		sessId = str(random.randint(100000, 999999))
-	else:
-		sessId = request.cookies["sessionId"]
-	resp = Response(render_template("main.html", host = hostname, sessionId = sessId), mimetype="text/html")
-	if not "sessionId" in request.cookies:
+		date = str(datetime.datetime.now() + datetime.timedelta(seconds = 5))
+		username = request.authorization.username
+		r.set(sessId, username)
+		r.set(sessId + "-expire", date)
+		setCookie = True
+	resp = Response(render_template("main.html", host = hostname, sessionId = username), mimetype="text/html")
+	if setCookie:
 		resp.set_cookie("sessionId", sessId)
 	return resp
 
