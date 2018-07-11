@@ -26,21 +26,25 @@ def main():
 	hostname = socket.gethostbyname(socket.gethostname())
 	sessionValid = False
 	setCookie = False
-	reauthorize = False
 	if "sessionId" in request.cookies:
 		try:
 			sessId = request.cookies.get("sessionId")
 			username = r.get(sessId)
-			expiry = datetime.datetime.strptime(r.get(sessId + "-expire"), DATE_FORMAT).date()
+			expiry = datetime.datetime.strptime(r.get(sessId + "-expire"), DATE_FORMAT)
 			sessionValid = datetime.datetime.now() < expiry
-			reauthorize = not sessionValid
 		except:
 			pass
 	if not sessionValid:
-		if reauthorize or not request.authorization or not request.authorization.username:
+		if not request.authorization or not request.authorization.username:
+			return authenticate()
+		sessId = request.cookies.get("sessionId")
+		reauth = r.get(sessId)
+		if reauth == request.authorization.username:
+			r.delete(sessId)
+			r.delete(sessId + "-expire")
 			return authenticate()
 		sessId = str(random.randint(100000, 999999))
-		date = str(datetime.datetime.now() + datetime.timedelta(seconds = 5))
+		date = str(datetime.datetime.now() + datetime.timedelta(minutes = 5))
 		username = request.authorization.username
 		r.set(sessId, username)
 		r.set(sessId + "-expire", date)
